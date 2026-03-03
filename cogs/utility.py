@@ -101,6 +101,33 @@ class Utility(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.hybrid_command()
+    async def serverinfo(self, ctx):
+        g = ctx.guild
+        days = (discord.utils.utcnow() - g.created_at).days
+        desc = f"Created {days} days ago\n\n"
+        desc += f"{g.description or 'No Description'}\n\n"
+        desc += f"**{g.member_count} members** • Level {g.premium_tier}\n"
+        desc += f"**{len(g.text_channels)} text channels** • {len(g.voice_channels)} voice channels\n"
+        desc += f"**{len(g.roles)} roles** • {len(g.emojis)} emojis\n"
+        desc += f"**{g.premium_subscription_count} boosts** • {len(g.categories)} categories"
+        if g.vanity_url_code:
+            desc += f"\n\n**Vanity URL** discord.gg/{g.vanity_url_code}"
+        e = discord.Embed(description=desc, color=0x2b2d31)
+        e.set_author(name=g.name, icon_url=g.icon.url if g.icon else None)
+        if g.icon: e.set_thumbnail(url=g.icon.url)
+        e.set_footer(text=f"Owner: @{g.owner.name} • ID: {g.id}")
+        view = discord.ui.View()
+        if g.vanity_url_code:
+            view.add_item(discord.ui.Button(label="Join Server", url=f"https://discord.gg/{g.vanity_url_code}", style=discord.ButtonStyle.link))
+        if g.icon:
+            view.add_item(discord.ui.Button(label="Icon", url=g.icon.url, style=discord.ButtonStyle.link))
+        if g.splash:
+            view.add_item(discord.ui.Button(label="Splash", url=g.splash.url, style=discord.ButtonStyle.link))
+        if g.banner:
+            view.add_item(discord.ui.Button(label="Banner", url=g.banner.url, style=discord.ButtonStyle.link))
+        await ctx.send(embed=e, view=view)
+
+    @commands.hybrid_command()
     async def remind(self, ctx, time: str, *, reminder: str):
         unit = time[-1]
         if unit not in ('s', 'm', 'h'):

@@ -28,10 +28,23 @@ def save_cfg():
     with open('config.json', 'w') as f:
         json.dump(bot.cfg, f)
 
+def load_warns():
+    try:
+        with open('warns.json') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_warns():
+    with open('warns.json', 'w') as f:
+        json.dump(bot.warns, f)
+
 bot.cfg = load_cfg()
 bot.afk = {}
 bot.snipe = {}
+bot.warns = load_warns()
 bot.save_cfg = save_cfg
+bot.save_warns = save_warns
 
 @bot.event
 async def on_ready():
@@ -41,7 +54,7 @@ async def on_ready():
 
 async def main():
     async with bot:
-        for cog in ['cogs.config', 'cogs.moderation', 'cogs.utility', 'cogs.booster', 'cogs.events', 'cogs.fun']:
+        for cog in ['cogs.config', 'cogs.moderation', 'cogs.utility', 'cogs.booster', 'cogs.events', 'cogs.fun', 'cogs.social']:
             await bot.load_extension(cog)
         await bot.start(TOKEN)
 

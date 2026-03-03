@@ -54,6 +54,31 @@ class Events(commands.Cog):
                 await ch.send(embed=discord.Embed(description=f"{member.name} left.", color=0xed4245))
 
     @commands.Cog.listener()
+    async def on_message_edit(self, before, after):
+        if not self.bot.cfg['log_channel'] or before.author.bot: return
+        if before.content == after.content: return
+        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        if not ch: return
+        e = discord.Embed(title="Message Edited", color=0xfaa61a)
+        e.add_field(name="User", value=before.author.mention)
+        e.add_field(name="Channel", value=before.channel.mention)
+        e.add_field(name="Before", value=before.content or "No text", inline=False)
+        e.add_field(name="After", value=after.content or "No text", inline=False)
+        await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if not self.bot.cfg['log_channel']: return
+        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        if not ch: return
+        if before.channel is None and after.channel:
+            await ch.send(embed=discord.Embed(description=f"{member.mention} joined **{after.channel.name}**", color=0x57f287))
+        elif before.channel and after.channel is None:
+            await ch.send(embed=discord.Embed(description=f"{member.mention} left **{before.channel.name}**", color=0xed4245))
+        elif before.channel != after.channel:
+            await ch.send(embed=discord.Embed(description=f"{member.mention} moved from **{before.channel.name}** to **{after.channel.name}**", color=0xfaa61a))
+
+    @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.premium_since and not after.premium_since:
             uid = str(after.id)

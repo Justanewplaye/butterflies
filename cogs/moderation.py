@@ -1,4 +1,4 @@
-import discord, asyncio
+import discord, asyncio, datetime
 from discord.ext import commands
 
 class Moderation(commands.Cog):
@@ -71,6 +71,59 @@ class Moderation(commands.Cog):
         else:
             await member.add_roles(role)
             await ctx.send(embed=discord.Embed(description=f"Gave {role.mention} to {member.mention}", color=0x57f287))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(moderate_members=True)
+    async def timeout(self, ctx, member: discord.Member, time: str, *, reason: str = "No reason"):
+        unit = time[-1]
+        if unit not in ('s', 'm', 'h'):
+            return await ctx.send("Use s, m, or h. Example: `10m`")
+        secs = int(time[:-1]) * {'s': 1, 'm': 60, 'h': 3600}[unit]
+        until = discord.utils.utcnow() + datetime.timedelta(seconds=secs)
+        await member.timeout(until, reason=reason)
+        await ctx.send(embed=discord.Embed(description=f"Timed out {member.mention} for {time}.", color=0x99aab5))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(manage_channels=True)
+    async def slowmode(self, ctx, seconds: int):
+        await ctx.channel.edit(slowmode_delay=seconds)
+        txt = f"Slowmode set to {seconds}s." if seconds else "Slowmode disabled."
+        await ctx.send(embed=discord.Embed(description=txt, color=0x57f287))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(manage_nicknames=True)
+    async def nick(self, ctx, member: discord.Member, *, name: str = None):
+        await member.edit(nick=name)
+        txt = "Nickname cleared." if not name else f"Nickname set to **{name}**."
+        await ctx.send(embed=discord.Embed(description=txt, color=0x57f287))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(manage_messages=True)
+    async def warn(self, ctx, member: discord.Member, *, reason: str = "No reason"):
+        gid, uid = str(ctx.guild.id), str(member.id)
+        self.bot.warns.setdefault(gid, {}).setdefault(uid, []).append({'reason': reason, 'mod': ctx.author.name})
+        self.bot.save_warns()
+        count = len(self.bot.warns[gid][uid])
+        await ctx.send(embed=discord.Embed(description=f"Warned {member.mention} ({count} total). Reason: {reason}", color=0xfaa61a))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(manage_messages=True)
+    async def warnings(self, ctx, member: discord.Member):
+        gid, uid = str(ctx.guild.id), str(member.id)
+        warns = self.bot.warns.get(gid, {}).get(uid, [])
+        if not warns:
+            return await ctx.send(embed=discord.Embed(description=f"{member.mention} has no warnings.", color=0x57f287))
+        lines = "\n".join(f"`{i+1}.` {w['reason']} — by {w['mod']}" for i, w in enumerate(warns))
+        await ctx.send(embed=discord.Embed(title=f"Warnings for {member.name}", description=lines, color=0xfaa61a))
+
+    @commands.hybrid_command()
+    @commands.has_permissions(manage_messages=True)
+    async def clearwarns(self, ctx, member: discord.Member):
+        gid, uid = str(ctx.guild.id), str(member.id)
+        if gid in self.bot.warns and uid in self.bot.warns[gid]:
+            self.bot.warns[gid].pop(uid)
+            self.bot.save_warns()
+        await ctx.send(embed=discord.Embed(description=f"Cleared warnings for {member.mention}.", color=0x57f287))
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
