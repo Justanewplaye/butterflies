@@ -11,7 +11,6 @@ class Events(commands.Cog):
         if message.author.id in self.bot.afk:
             del self.bot.afk[message.author.id]
             await message.channel.send(embed=discord.Embed(description=f"Welcome back {message.author.mention}.", color=0x57f287))
-        await self.bot.process_commands(message)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
