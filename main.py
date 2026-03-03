@@ -1,4 +1,4 @@
-import discord, os, json, asyncio
+import discord, os, json, asyncio, datetime
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -30,16 +30,18 @@ def save_cfg():
 
 bot.cfg = load_cfg()
 bot.afk = {}
+bot.snipe = {}
 bot.save_cfg = save_cfg
 
 @bot.event
 async def on_ready():
+    bot.start_time = datetime.datetime.utcnow()
     await bot.tree.sync()
     print(f'{bot.user} online')
 
 async def main():
     async with bot:
-        for cog in ['cogs.config', 'cogs.moderation', 'cogs.utility', 'cogs.booster', 'cogs.events']:
+        for cog in ['cogs.config', 'cogs.moderation', 'cogs.utility', 'cogs.booster', 'cogs.events', 'cogs.fun']:
             await bot.load_extension(cog)
         await bot.start(TOKEN)
 

@@ -14,6 +14,8 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+        if not message.author.bot:
+            self.bot.snipe[message.channel.id] = message
         if not self.bot.cfg['log_channel'] or message.author.bot: return
         ch = self.bot.get_channel(self.bot.cfg['log_channel'])
         if not ch: return
