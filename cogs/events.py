@@ -1,0 +1,69 @@
+import discord
+from discord.ext import commands
+
+class Events(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot: return
+        if message.author.id in self.bot.afk:
+            del self.bot.afk[message.author.id]
+            await message.channel.send(embed=discord.Embed(description=f"Welcome back {message.author.mention}.", color=0x57f287))
+        await self.bot.process_commands(message)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message):
+        if not self.bot.cfg['log_channel'] or message.author.bot: return
+        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        if not ch: return
+        e = discord.Embed(title="Message Deleted", color=0xed4245)
+        e.add_field(name="User", value=message.author.mention)
+        e.add_field(name="Content", value=message.content or "No text")
+        await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        if self.bot.cfg['log_channel']:
+            ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+            if ch:
+                await ch.send(embed=discord.Embed(description=f"{member.mention} joined.", color=0x57f287))
+        if self.bot.cfg['welcome_channel']:
+            ch = self.bot.get_channel(self.bot.cfg['welcome_channel'])
+            if ch:
+                e = discord.Embed(description=f"Welcome {member.mention}!", color=0x5865f2)
+                if self.bot.cfg['join_image']: e.set_image(url=self.bot.cfg['join_image'])
+                await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        uid = str(member.id)
+        if uid in self.bot.cfg['booster_roles']:
+            role_id = self.bot.cfg['booster_roles'].get(uid)
+            role = member.guild.get_role(int(role_id)) if role_id else None
+            if role:
+                try: await role.delete()
+                except: pass
+            self.bot.cfg['booster_roles'].pop(uid, None)
+            self.bot.save_cfg()
+        if self.bot.cfg['log_channel']:
+            ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+            if ch:
+                await ch.send(embed=discord.Embed(description=f"{member.name} left.", color=0xed4245))
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if before.premium_since and not after.premium_since:
+            uid = str(after.id)
+            if uid in self.bot.cfg['booster_roles']:
+                role_id = self.bot.cfg['booster_roles'].get(uid)
+                role = after.guild.get_role(int(role_id)) if role_id else None
+                if role:
+                    try: await role.delete()
+                    except: pass
+                self.bot.cfg['booster_roles'].pop(uid, None)
+                self.bot.save_cfg()
+
+async def setup(bot):
+    await bot.add_cog(Events(bot))
