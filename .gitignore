@@ -1,4 +1,5 @@
 .env
 config.json
+startup.sh
 __pycache__/
 *.pyc
