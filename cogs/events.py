@@ -16,8 +16,9 @@ class Events(commands.Cog):
     async def on_message_delete(self, message):
         if not message.author.bot:
             self.bot.snipe[message.channel.id] = message
-        if not self.bot.cfg['log_channel'] or message.author.bot: return
-        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        cfg = self.bot.gcfg(message.guild.id)
+        if not cfg['log_channel'] or message.author.bot: return
+        ch = self.bot.get_channel(cfg['log_channel'])
         if not ch: return
         e = discord.Embed(title="Message Deleted", color=0xed4245)
         e.add_field(name="User", value=message.author.mention)
@@ -25,39 +26,11 @@ class Events(commands.Cog):
         await ch.send(embed=e)
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
-        if self.bot.cfg['log_channel']:
-            ch = self.bot.get_channel(self.bot.cfg['log_channel'])
-            if ch:
-                await ch.send(embed=discord.Embed(description=f"{member.mention} joined.", color=0x57f287))
-        if self.bot.cfg['welcome_channel']:
-            ch = self.bot.get_channel(self.bot.cfg['welcome_channel'])
-            if ch:
-                e = discord.Embed(description=f"Welcome {member.mention}!", color=0x5865f2)
-                if self.bot.cfg['join_image']: e.set_image(url=self.bot.cfg['join_image'])
-                await ch.send(embed=e)
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        uid = str(member.id)
-        if uid in self.bot.cfg['booster_roles']:
-            role_id = self.bot.cfg['booster_roles'].get(uid)
-            role = member.guild.get_role(int(role_id)) if role_id else None
-            if role:
-                try: await role.delete()
-                except: pass
-            self.bot.cfg['booster_roles'].pop(uid, None)
-            self.bot.save_cfg()
-        if self.bot.cfg['log_channel']:
-            ch = self.bot.get_channel(self.bot.cfg['log_channel'])
-            if ch:
-                await ch.send(embed=discord.Embed(description=f"{member.name} left.", color=0xed4245))
-
-    @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if not self.bot.cfg['log_channel'] or before.author.bot: return
+        cfg = self.bot.gcfg(before.guild.id)
+        if not cfg['log_channel'] or before.author.bot: return
         if before.content == after.content: return
-        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        ch = self.bot.get_channel(cfg['log_channel'])
         if not ch: return
         e = discord.Embed(title="Message Edited", color=0xfaa61a)
         e.add_field(name="User", value=before.author.mention)
@@ -68,8 +41,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if not self.bot.cfg['log_channel']: return
-        ch = self.bot.get_channel(self.bot.cfg['log_channel'])
+        cfg = self.bot.gcfg(member.guild.id)
+        if not cfg['log_channel']: return
+        ch = self.bot.get_channel(cfg['log_channel'])
         if not ch: return
         if before.channel is None and after.channel:
             await ch.send(embed=discord.Embed(description=f"{member.mention} joined **{after.channel.name}**", color=0x57f287))
@@ -79,16 +53,48 @@ class Events(commands.Cog):
             await ch.send(embed=discord.Embed(description=f"{member.mention} moved from **{before.channel.name}** to **{after.channel.name}**", color=0xfaa61a))
 
     @commands.Cog.listener()
+    async def on_member_join(self, member):
+        cfg = self.bot.gcfg(member.guild.id)
+        if cfg['log_channel']:
+            ch = self.bot.get_channel(cfg['log_channel'])
+            if ch:
+                await ch.send(embed=discord.Embed(description=f"{member.mention} joined.", color=0x57f287))
+        if cfg['welcome_channel']:
+            ch = self.bot.get_channel(cfg['welcome_channel'])
+            if ch:
+                e = discord.Embed(description=f"Welcome {member.mention}!", color=0x5865f2)
+                if cfg['join_image']: e.set_image(url=cfg['join_image'])
+                await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        cfg = self.bot.gcfg(member.guild.id)
+        uid = str(member.id)
+        if uid in cfg['booster_roles']:
+            role_id = cfg['booster_roles'].get(uid)
+            role = member.guild.get_role(int(role_id)) if role_id else None
+            if role:
+                try: await role.delete()
+                except: pass
+            cfg['booster_roles'].pop(uid, None)
+            self.bot.save_cfg()
+        if cfg['log_channel']:
+            ch = self.bot.get_channel(cfg['log_channel'])
+            if ch:
+                await ch.send(embed=discord.Embed(description=f"{member.name} left.", color=0xed4245))
+
+    @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.premium_since and not after.premium_since:
+            cfg = self.bot.gcfg(after.guild.id)
             uid = str(after.id)
-            if uid in self.bot.cfg['booster_roles']:
-                role_id = self.bot.cfg['booster_roles'].get(uid)
+            if uid in cfg['booster_roles']:
+                role_id = cfg['booster_roles'].get(uid)
                 role = after.guild.get_role(int(role_id)) if role_id else None
                 if role:
                     try: await role.delete()
                     except: pass
-                self.bot.cfg['booster_roles'].pop(uid, None)
+                cfg['booster_roles'].pop(uid, None)
                 self.bot.save_cfg()
 
 async def setup(bot):

@@ -80,16 +80,17 @@ class Config(commands.Cog):
     @commands.hybrid_command(name="logs_config")
     @commands.has_permissions(administrator=True)
     async def logs_config(self, ctx, channel: discord.TextChannel):
-        self.bot.cfg['log_channel'] = channel.id
+        self.bot.gcfg(ctx.guild.id)['log_channel'] = channel.id
         self.bot.save_cfg()
         await ctx.send(embed=discord.Embed(description=f"Logs -> {channel.mention}", color=0x57f287))
 
     @commands.hybrid_command(name="welcome_config")
     @commands.has_permissions(administrator=True)
     async def welcome_config(self, ctx, channel: discord.TextChannel, join_img: str = None, leave_img: str = None):
-        self.bot.cfg['welcome_channel'] = channel.id
-        if join_img: self.bot.cfg['join_image'] = join_img
-        if leave_img: self.bot.cfg['leave_image'] = leave_img
+        cfg = self.bot.gcfg(ctx.guild.id)
+        cfg['welcome_channel'] = channel.id
+        if join_img: cfg['join_image'] = join_img
+        if leave_img: cfg['leave_image'] = leave_img
         self.bot.save_cfg()
         await ctx.send(embed=discord.Embed(description=f"Welcome -> {channel.mention}", color=0x57f287))
 

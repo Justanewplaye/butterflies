@@ -16,17 +16,22 @@ def load_cfg():
         with open('config.json') as f:
             return json.load(f)
     except:
-        return {
-            'log_channel': None,
-            'welcome_channel': None,
-            'join_image': None,
-            'leave_image': None,
-            'booster_roles': {}
-        }
+        return {}
 
 def save_cfg():
     with open('config.json', 'w') as f:
         json.dump(bot.cfg, f)
+
+def gcfg(guild_id):
+    gid = str(guild_id)
+    bot.cfg.setdefault(gid, {
+        'log_channel': None,
+        'welcome_channel': None,
+        'join_image': None,
+        'leave_image': None,
+        'booster_roles': {}
+    })
+    return bot.cfg[gid]
 
 def load_warns():
     try:
@@ -45,6 +50,7 @@ bot.snipe = {}
 bot.warns = load_warns()
 bot.save_cfg = save_cfg
 bot.save_warns = save_warns
+bot.gcfg = gcfg
 
 @bot.event
 async def on_ready():
