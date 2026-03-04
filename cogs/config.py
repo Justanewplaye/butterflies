@@ -63,7 +63,7 @@ class Config(commands.Cog):
                 return await ctx.send(embed=discord.Embed(description=f"No info for `{cmd}`.", color=0xed4245))
             usage, desc = cmd_info[cmd]
             e = discord.Embed(color=0x2b2d31)
-            e.add_field(name="Usage", value=f"`!{usage}`", inline=False)
+            e.add_field(name="Usage", value=f"`,{usage}`", inline=False)
             e.add_field(name="Description", value=desc, inline=False)
             e.set_footer(text=ctx.author.name)
             return await ctx.send(embed=e)
@@ -74,7 +74,7 @@ class Config(commands.Cog):
         e.add_field(name="Fun", value="`8ball` `coinflip` `roll` `ship` `pp` `rate` `mock` `reverse` `snipe` `poll` `trivia` `tictactoe` `color` `giveaway`", inline=False)
         e.add_field(name="Social", value="`hug` `pat` `slap` `kiss`", inline=False)
         e.add_field(name="Booster", value="`/br create` `/br name` `/br color` `/br give` `/br take` `/br delete`", inline=False)
-        e.set_footer(text="!help <command> for more info")
+        e.set_footer(text=",help <command> for more info")
         await ctx.send(embed=e)
 
     @commands.hybrid_command(name="logs_config")
